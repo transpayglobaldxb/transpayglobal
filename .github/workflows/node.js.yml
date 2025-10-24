@@ -8,43 +8,53 @@ on:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [20.x] # Use your production Node version
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+        
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '20.x'
           cache: 'npm'
-
+          
       - name: Install dependencies
         run: npm ci
-
+        
       - name: Build project
         run: npm run build
-
+        
       # ---- DEPLOYMENT SECTION ----
-      - name: Copy files to EC2
+      - name: Copy build files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: 34.201.44.2
-          username: ubuntu
-          key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           source: "build/*"
-          target: "~/transglobal//build"
-
-      - name: Restart Nginx or App (Optional)
+          target: "/home/ubuntu/transglobal"
+          strip_components: 0
+          rm: true  # Remove target directory before copying
+          
+      - name: Restart PM2 Application
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: 34.201.44.2
-          username: ubuntu
-          key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "Deployment successful. Restarting server..."
-            npm run start
+            cd /home/ubuntu/transglobal
+            
+            # Check if PM2 process exists and restart, otherwise start new
+            if pm2 describe frontui > /dev/null 2>&1; then
+              echo "Restarting existing PM2 process..."
+              pm2 restart frontui
+            else
+              echo "Starting new PM2 process..."
+              pm2 start npm --name "frontui" -- start
+              pm2 save
+            fi
+            
+            echo "Deployment completed successfully!"
+            pm2 status
