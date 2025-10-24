@@ -1,0 +1,26 @@
+{
+  "name": "TransPay Global",
+  "short_name": "TransPay",
+  "description": "Complete Financial Ecosystem for Global Opportunities",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#213E63",
+  "theme_color": "#C4A962",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "business", "productivity"],
+  "screenshots": []
+}
