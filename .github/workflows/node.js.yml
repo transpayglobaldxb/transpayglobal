@@ -1,0 +1,50 @@
+name: CI/CD Frontend Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x] # Use your production Node version
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      # ---- DEPLOYMENT SECTION ----
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 34.201.44.2
+          username: ubuntu
+          key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY
+          source: "build/*"
+          target: "~/transglobal//build"
+
+      - name: Restart Nginx or App (Optional)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 34.201.44.2
+          username: ubuntu
+          key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY
+          script: |
+            echo "Deployment successful. Restarting server..."
+            npm run start
